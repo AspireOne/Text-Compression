@@ -40,10 +40,10 @@ namespace HuffmanCompression
             }
 
             Console.WriteLine("\n-------------------\nare identical: " + areIdentical + (areIdentical ? " - Succes!" : ""));
-            string originalSize = testTextBytes.Length + " bytes";
-            string compressedSize = compBytes.Length + " bytes";
+            int originalSize = testTextBytes.Length;
+            int compressedSize = compBytes.Length;
 
-            Console.WriteLine($"original size: {originalSize}.\nCompressed size: {compressedSize}.\n-----------\n reduced by {testTextBytes.Length - compBytes.Length} bytes!");
+            Console.WriteLine($"original size: {originalSize} bytes.\nCompressed size: {compressedSize} bytes.\n-----------\n reduced by {originalSize - compressedSize} bytes ({compressedSize * (100 / originalSize)}%)!");
         }
 
         public static string Decompress(byte[] text) => Decompressor.Decompress(text);

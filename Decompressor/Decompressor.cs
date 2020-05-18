@@ -14,11 +14,21 @@ namespace HuffmanCompression
             var compressedAsBits = new StringBuilder(IOUtils.GetBits(compressedAsBytes));
             RemoveBeginningZeros(compressedAsBits);
 
+            Console.WriteLine("first 100 of compressed message (in decompressor): ");
+            for (int i = 0; i < 100 / 8; ++i)
+                Program.PrintBits(compressedAsBytes[i]);
+            Console.WriteLine("----");
+
             var decompressed = new StringBuilder();
             var dict = new Dictionary<string, char>();
 
             while (compressedAsBits.Length > 1)
             {
+                int i = 0;
+                Console.WriteLine("Current dictionary: ");
+                foreach (var pair in dict)
+                    Console.WriteLine(++i + " { '" + (pair.Value == '\n' ? "[new line]" : "" + pair.Value) + "', \"" + pair.Key + "\" },");
+
                 bool codeAlreadyEncountered = char.GetNumericValue(compressedAsBits[0]) == Compressor.CodeAlreadyEncounteredBit;
                 compressedAsBits.Remove(0, 1);
 
@@ -37,9 +47,10 @@ namespace HuffmanCompression
 
         private static void RemoveBeginningZeros(StringBuilder text)
         {
-            for (int i = 0; i < text.Length; ++i)
+            for (int i = 0; i < IOUtils.BitsInByte; ++i)
                 if (char.GetNumericValue(text[i]) != 0)
                 {
+                    Console.WriteLine("amount of zeros removed during compression: " + i);
                     text.Remove(0, i);
                     return;
                 }
@@ -49,7 +60,6 @@ namespace HuffmanCompression
         {
             string codeLengthAsBinary = compressed.ToString(0, Compressor.AmountOfBitsToRepresentCodeLength);
             int codeLength = Convert.ToInt32(codeLengthAsBinary, 2);
-
             compressed.Remove(0, Compressor.AmountOfBitsToRepresentCodeLength);
 
             string charEncoded = compressed.ToString(0, Compressor.BitsInOneChar);
@@ -77,7 +87,7 @@ namespace HuffmanCompression
                 }
             }
 
-            throw new Exception($"Method RecognizeCode in class {nameof(Decompressor)} could not recognize code: {bits}");
+            throw new Exception($"Method RecognizeCode in class {nameof(Decompressor)} could not recognize code: {bits.ToString(0, Compressor.MaxCodeLength)}");
         }
     }
 }

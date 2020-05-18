@@ -3,6 +3,7 @@ using HuffmanCompression.TreeElements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 
 namespace HuffmanCompression
@@ -29,7 +30,7 @@ namespace HuffmanCompression
 
         public static byte[] Compress(string text)
         {
-            List<(int occurence, char character)> charactersOccurence = GetCharactersOccurence(text);
+            (int occurence, char character)[] charactersOccurence = GetCharactersOccurence(text);
 
             Dictionary<char, string> charCodeDict = CreateCodesDictionary(charactersOccurence);
 
@@ -39,6 +40,11 @@ namespace HuffmanCompression
             string textToCompress = AddTreeInfo(text, charCodeDict);
 
             string textCompressed = ReplaceTextWithCodes(textToCompress, charCodeDict);
+            Console.WriteLine("Amount of zeros to add: " + textCompressed.Length % 8);
+            Console.WriteLine("first 100 of compressed message: ");
+            for (int i = 0; i < 100; ++i)
+                Console.Write(textCompressed[i]);
+            Console.WriteLine("----");
 
             return Utils.IOUtils.WriteBits(textCompressed, true);
         }
@@ -121,7 +127,7 @@ namespace HuffmanCompression
         }
 
         // Character | the character's representation code.
-        private static Dictionary<char, string> CreateCodesDictionary(List<(int occurence, char character)> occurences)
+        private static Dictionary<char, string> CreateCodesDictionary((int occurence, char character)[] occurences)
         {
             var codes = new Dictionary<char, string>();
             BoxCharacters(occurences).ForEach(x => codes.Add(x.Character, FindCharacterCode(x)));
@@ -136,22 +142,23 @@ namespace HuffmanCompression
 
         private static string FindCharacterCode(CharacterBox box)
         {
-            StringBuilder code = new StringBuilder();
+            string code = "";
 
             Box temp = box;
             do
-                code.Append(temp.Number);
+                code += temp.Number;
             while ((temp = temp.Parent)?.Parent != null);
 
-            return code.ToString().Reverse();
+            return code.Reverse();
         }
 
-        private static List<CharacterBox> BoxCharacters(List<(int occurence, char character)> occurences)
+        // Correct.  
+        private static List<CharacterBox> BoxCharacters((int occurence, char character)[] occurences)
         {
             var CharacterList = new List<CharacterBox>();
             var tree = new List<Box>();
 
-            occurences.Sort();
+            Array.Sort(occurences);
             foreach (var occurence in occurences)
             {
                 var box = new CharacterBox(occurence.character, occurence.occurence);
@@ -161,13 +168,13 @@ namespace HuffmanCompression
 
             while (tree.Count > 1)
             {
-                Box left = tree[BoxesBox.LeftIndex];
                 Box right = tree[BoxesBox.RightIndex];
+                Box left = tree[BoxesBox.LeftIndex];
 
                 Box newBox = new BoxesBox(left, right);
 
-                tree.Remove(left);
                 tree.Remove(right);
+                tree.Remove(left);
 
                 InsertAtAppropriatePlace(tree, newBox);
             }
@@ -175,17 +182,16 @@ namespace HuffmanCompression
             return CharacterList;
         }
 
+        // Correct.  
         private static void InsertAtAppropriatePlace(List<Box> tree, Box boxToInsert)
         {
-            int treeSize = tree.Count;
-
-            if (treeSize == 0 || boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth))
+            if (boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth) || tree.Count == 0)
             {
                 tree.Add(boxToInsert);
                 return;
             }
 
-            for (int i = 0; i < treeSize; ++i)
+            for (int i = 0; i < tree.Count; ++i)
             {
                 Box boxAtIndex = tree[i];
 
@@ -199,15 +205,16 @@ namespace HuffmanCompression
             throw new Exception($"Could not insert box with sum {boxToInsert.Sum} to a tree with count {tree.Count} and highest sum {tree.Last().Sum}.");
         }
 
-        private static List<(int occurence, char character)> GetCharactersOccurence(string text)
+
+        // Correct.  
+        private static (int occurence, char character)[] GetCharactersOccurence(string text)
         {
-            var occurence = new List<(int occurence, char character)>();
+            var set = new HashSet<(int occurence, char character)>();
 
             foreach (char ch in text)
-                if (!occurence.Select(x => x.character).Contains(ch))
-                    occurence.Add((text.Length - text.Replace(ch.ToString(), "").Length, ch));
+                set.Add((text.Length - text.Replace(ch.ToString(), "").Length, ch));
 
-            return occurence;
+            return set.ToArray();
         }
     }
 }
