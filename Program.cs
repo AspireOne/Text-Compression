@@ -1,61 +1,51 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace HuffmanCompression
 {
     public static class Program
     {
-        static readonly string testTextPath = @"C:\Users\matej\Desktop\test-text.txt";
-        static readonly string outputPath = @"C:\Users\matej\Desktop\compressed.txt";
-        static readonly string decompOutputPath = @"C:\Users\matej\Desktop\decompressed.txt";
+        static readonly string NoArgumentErrorText = "You have not specified any files to compress/decompress.";
+        static readonly string TooManyCharactersExceptionText = "The specified file has too many characters.";
+        static readonly string UnexpectedErrorText = "There was an unexpected error. Skipping.";
+        static readonly string WaitForKeypressText = "Press any button to close...";
+        static readonly string ProcessDoneText = "Done.";
 
-        private static void Main(string[] args)
+        static void Main(string[] args)
         {
-            string textToCompress = GetTestText();
-            byte[] compressed = Compress(textToCompress);
-            WriteToOutput(compressed);
+            if (!args.Any())
+                Console.WriteLine(NoArgumentErrorText);
+            else
+                DoActionsOnFiles(args);
 
-            byte[] output = ReadOutput();
-            string decompressed = Decompressor.Decompress(output);
-            File.WriteAllText(decompOutputPath, decompressed);
+            WaitForKeyPress();
+        }
 
-            var decompBytes = File.ReadAllBytes(decompOutputPath);
-            var testTextBytes = File.ReadAllBytes(testTextPath);
-
-            WriteCompressionInfo(testTextBytes, decompBytes, compressed);
+        static void WaitForKeyPress()
+        {
+            Console.WriteLine(WaitForKeypressText);
             Console.ReadKey();
         }
 
-        public static void WriteCompressionInfo(byte[] testTextBytes, byte[] decompBytes, byte[] compBytes)
+        static void DoActionsOnFiles(string[] paths)
         {
-            bool areIdentical = decompBytes.Length == testTextBytes.Length;
-            if (areIdentical)
+            foreach (string path in paths)
             {
-                for (int i = 0; i < decompBytes.Length; ++i)
-                    if (decompBytes[i] != testTextBytes[i])
-                    {
-                        areIdentical = false;
-                        break;
-                    }
+                if (Path.GetExtension(path).Equals(Compressor.CompressedFileExtension))
+                {
+                    Console.WriteLine($"Decompressing {path}...");
+                    try { Decompressor.DecompressFile(path); Console.WriteLine(ProcessDoneText); }
+                    catch (Exception e) { Console.WriteLine($"{UnexpectedErrorText} (exception: {e.GetType()})"); }
+                }
+                else
+                {
+                    Console.WriteLine($"Compressing {path}...");
+                    try { Console.WriteLine($"{ProcessDoneText}. Summary:\n{Compressor.CompressFile(path)}\n"); }
+                    catch (TooManyCharactersException) { Console.WriteLine(TooManyCharactersExceptionText); }
+                    catch (Exception e) { Console.WriteLine($"{UnexpectedErrorText} (exception: {e.GetType()})"); }
+                }
             }
-
-            Console.WriteLine("\n-------------------\nare identical: " + areIdentical + (areIdentical ? " - Succes!" : ""));
-            int originalSize = testTextBytes.Length;
-            int compressedSize = compBytes.Length;
-
-            Console.WriteLine($"original size: {originalSize} bytes.\nCompressed size: {compressedSize} bytes.\n-----------\n reduced by {originalSize - compressedSize} bytes ({compressedSize * (100 / originalSize)}%)!");
-        }
-
-        public static string Decompress(byte[] text) => Decompressor.Decompress(text);
-        public static byte[] Compress(string text) => Compressor.Compress(text);
-        public static void WriteToOutput(byte[] text) => File.WriteAllBytes(outputPath, text);
-        public static byte[] ReadOutput() => File.ReadAllBytes(outputPath);
-        public static string GetTestText() => File.ReadAllText(testTextPath);
-
-        public static void PrintBits(byte @byte)
-        {
-            for (int i = 0; i < 8; ++i)
-                Console.Write((byte)((@byte >> i) & 1));
         }
     }
 }

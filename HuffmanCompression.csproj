@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CompressionTest.cs" />
     <Compile Include="Utils\IOUtils.cs" />
     <Compile Include="Compressor\TooManyCharactersException.cs" />
     <Compile Include="Compressor\TreeElements\Box.cs" />

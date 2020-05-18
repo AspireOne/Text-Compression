@@ -2,9 +2,9 @@
 {
     internal abstract class Box
     {
-        abstract internal Box Parent { get; set; }
-        abstract internal int Number { get; set; }
-        abstract internal int Depth { get; }
-        abstract internal int Sum { get; }
+        internal abstract Box Parent { get; set; }
+        internal abstract int Number { get; set; }
+        internal abstract int Depth { get; }
+        internal abstract int Sum { get; }
     }
 }
