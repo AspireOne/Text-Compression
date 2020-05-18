@@ -185,7 +185,7 @@ namespace HuffmanCompression
         // Correct.  
         private static void InsertAtAppropriatePlace(List<Box> tree, Box boxToInsert)
         {
-            if (boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth) || tree.Count == 0)
+            if (tree.Count == 0 || boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth))
             {
                 tree.Add(boxToInsert);
                 return;
