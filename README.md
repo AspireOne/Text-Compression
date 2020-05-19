@@ -1,5 +1,5 @@
 # Huffman-coding-compression
-##### Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
+#### Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
 
 ## Inner workings
 ### Text encoding
