@@ -8,7 +8,7 @@ namespace HuffmanCompression
 {
     internal class Decompressor
     {
-        const char EmptyChar = '\0';
+        private const char EmptyChar = '\0';
 
         public static string Decompress(byte[] compressedAsBytes)
         {
@@ -43,7 +43,7 @@ namespace HuffmanCompression
             File.WriteAllText(pathToDecompressedFile, decompressedText);
         }
 
-        static void RemoveBeginningZeros(StringBuilder text)
+        private static void RemoveBeginningZeros(StringBuilder text)
         {
             for (int i = 0; i < IOUtils.BitsInByte; ++i)
                 if (text[i] != '0')
@@ -53,7 +53,7 @@ namespace HuffmanCompression
                 }
         }
 
-        static (string code, char character) ExtractInfoCodeNotEncountered(StringBuilder compressed)
+        private static (string code, char character) ExtractInfoCodeNotEncountered(StringBuilder compressed)
         {
             string codeLengthAsBinary = compressed.ToString(0, Compressor.AmountOfBitsToRepresentCodeLength);
             int codeLength = Convert.ToInt32(codeLengthAsBinary, 2);
@@ -69,7 +69,7 @@ namespace HuffmanCompression
             return (code, charDecoded);
         }
 
-        static (string code, char character) TryRecognizeCode(StringBuilder bits, Dictionary<string, char> dict)
+        private static (string code, char character) TryRecognizeCode(StringBuilder bits, Dictionary<string, char> dict)
         {
             string unfinishedBits = "";
 

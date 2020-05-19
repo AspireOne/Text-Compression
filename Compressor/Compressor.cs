@@ -9,7 +9,6 @@ using System.Text;
 
 namespace HuffmanCompression
 {
-
     public class Compressor
     {
         public static readonly string CompressedFileExtension = ".comp";
@@ -74,26 +73,7 @@ namespace HuffmanCompression
             return $"\noriginal size: {originalFileSize} bytes.\nCompressed size: {compressedFileSize} bytes.\nReduced by {percentage}%";
         }
 
-        // Only for debugging purposes.  
-        static void WriteCompressionInfo(string beforeWritingToBytes, byte[] afterWritingToBytes, Dictionary<char, string> dict)
-        {
-            Console.WriteLine("Dictionary:");
-            int j = 0;
-            foreach (var pair in dict)
-                Console.WriteLine(++j + " { '" + (pair.Key == '\n' ? "[new line]" : "" + pair.Key) + "', \"" + pair.Value + "\" },");
-
-            Console.Write("Bits before writing to bytes: ");
-            IOUtils.PrintFirst48Chars(beforeWritingToBytes);
-
-            Console.Write("\nBits after writing to bytes:  ");
-            IOUtils.PrintFirst48Bits(afterWritingToBytes);
-
-            Console.Write($"\nAmount of redundant zeros: {afterWritingToBytes.Length * 8 - beforeWritingToBytes.Length}");
-
-            Console.Write("\n\n\n");
-        }
-
-        static bool CodesAreTooLong(Dictionary<char, string> codes)
+        private static bool CodesAreTooLong(Dictionary<char, string> codes)
         {
             foreach (var pair in codes)
                 if (pair.Value.Length > MaxCodeLength)
@@ -102,7 +82,7 @@ namespace HuffmanCompression
         }
 
         // [1][length][as encoded bits][code] OR [0][code]
-        static string AddTreeInfoAndReplaceCharsWithCode(string text, Dictionary<char, string> dict)
+        private static string AddTreeInfoAndReplaceCharsWithCode(string text, Dictionary<char, string> dict)
         {
             var textCopy = new StringBuilder(text);
             var usedChars = new List<char>();
@@ -140,7 +120,7 @@ namespace HuffmanCompression
             return textCopy.ToString();
         }
 
-        static string CorrectCodeLength(string codeLength)
+        private static string CorrectCodeLength(string codeLength)
         {
             int difference = AmountOfBitsToRepresentCodeLength - codeLength.Length;
 
@@ -151,7 +131,7 @@ namespace HuffmanCompression
             return codeLength;
         }
 
-        static byte EncodeCharacter(char character)
+        private static byte EncodeCharacter(char character)
         {
             var bytes = TextEncoding.GetBytes(new char[] { character });
 
@@ -162,7 +142,7 @@ namespace HuffmanCompression
         }
 
         // Character | the character's representation code.
-        static Dictionary<char, string> CreateCodesDictionary((int occurence, char character)[] occurences)
+        private static Dictionary<char, string> CreateCodesDictionary((int occurence, char character)[] occurences)
         {
             var codes = new Dictionary<char, string>();
             BoxCharacters(occurences).ForEach(x => codes.Add(x.Character, FindCharacterCode(x)));
@@ -170,7 +150,7 @@ namespace HuffmanCompression
             return codes;
         }
 
-        static string FindCharacterCode(CharacterBox box)
+        private static string FindCharacterCode(CharacterBox box)
         {
             string code = "";
 
@@ -182,8 +162,8 @@ namespace HuffmanCompression
             return code.Reverse();
         }
 
-        // Correct.  
-        static List<CharacterBox> BoxCharacters((int occurence, char character)[] occurences)
+        // Correct.
+        private static List<CharacterBox> BoxCharacters((int occurence, char character)[] occurences)
         {
             var CharacterList = new List<CharacterBox>();
             var tree = new List<Box>();
@@ -212,8 +192,8 @@ namespace HuffmanCompression
             return CharacterList;
         }
 
-        // Correct.  
-        static void InsertAtAppropriatePlace(List<Box> tree, Box boxToInsert)
+        // Correct.
+        private static void InsertAtAppropriatePlace(List<Box> tree, Box boxToInsert)
         {
             if (tree.Count == 0 || boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth))
             {
@@ -235,9 +215,8 @@ namespace HuffmanCompression
             throw new Exception($"Could not insert box with sum {boxToInsert.Sum} to a tree with count {tree.Count} and highest sum {tree.Last().Sum}.");
         }
 
-
-        // Correct.  
-        static (int occurence, char character)[] GetCharactersOccurence(string text)
+        // Correct.
+        private static (int occurence, char character)[] GetCharactersOccurence(string text)
         {
             var set = new HashSet<(int occurence, char character)>();
             foreach (char ch in text)

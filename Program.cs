@@ -6,13 +6,13 @@ namespace HuffmanCompression
 {
     public static class Program
     {
-        static readonly string NoArgumentErrorText = "You have not specified any files to compress/decompress.";
-        static readonly string TooManyCharactersExceptionText = "The specified file has too many characters.";
-        static readonly string UnexpectedErrorText = "There was an unexpected error. Skipping.";
-        static readonly string WaitForKeypressText = "Press any button to close...";
-        static readonly string ProcessDoneText = "Done.";
+        private static readonly string NoArgumentErrorText = "You have not specified any files to compress/decompress.";
+        private static readonly string TooManyCharactersExceptionText = "The specified file has too many characters.";
+        private static readonly string UnexpectedErrorText = "There was an unexpected error. Skipping.";
+        private static readonly string WaitForKeypressText = "Press any button to close...";
+        private static readonly string ProcessDoneText = "Done.";
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             if (!args.Any())
                 Console.WriteLine(NoArgumentErrorText);
@@ -22,13 +22,13 @@ namespace HuffmanCompression
             WaitForKeyPress();
         }
 
-        static void WaitForKeyPress()
+        private static void WaitForKeyPress()
         {
             Console.WriteLine(WaitForKeypressText);
             Console.ReadKey();
         }
 
-        static void DoActionsOnFiles(string[] paths)
+        private static void DoActionsOnFiles(string[] paths)
         {
             foreach (string path in paths)
             {

@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{15C28BC2-6294-4BE6-A46C-D075D51EB3CF}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>HuffmanTree</RootNamespace>
-    <AssemblyName>HuffmanTree</AssemblyName>
+    <RootNamespace>HuffmanCompression</RootNamespace>
+    <AssemblyName>HuffmanCompression</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -53,6 +53,9 @@
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -64,7 +67,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CompressionTest.cs" />
     <Compile Include="Utils\IOUtils.cs" />
     <Compile Include="Compressor\TooManyCharactersException.cs" />
     <Compile Include="Compressor\TreeElements\Box.cs" />
@@ -91,7 +93,9 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Resources\icon.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
