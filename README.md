@@ -13,7 +13,9 @@ This specific implementation compresses files to about 70% of their initial size
 Informations about each character are stored as follows:
 
 `[bit indicating if the character was already encountered in the text]`,
+
 if not: `[length of the character's code]`, `[the character's latin-2 representation]`, `[the character's code]`
+
 if yes: `[the character's code]`
 
 - the character's code length is stored in 4 bits (which means that the maximal code length is 2^4 - 1 = 15 - so in this implementation there's a limit on the amount of different characters that can be present in the text).
