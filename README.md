@@ -29,6 +29,8 @@ if yes: `[the character's code]`
 
 - Informations about each characters are not written at the beginning or the end of the file, but directly whenever the character is in the text.
 
+- The bits are stored in bytes, and each byte has 8 bits. If the amount of bits isn't divisible by 8 without a remainder, additional bits must be added. This implementation adds zeros at the beginning of the compressed text, and because the first information on each character is if it has (0) or has not (1) already been encountered, then the first bit on the first character must obviously always be 1. This allows the decompressor to safely recognize and ignore the redundant bits -> all zeros before the first non-zero character.
+
 - The only information added to a character that was already encountered is one bit (0), which indicates that it has already been encountered. Decompressor then starts reading from the first bit and gradually adds next, until it finds a match in whenever it stores already encountered codes and their latin-2 representations.
 
 example:
