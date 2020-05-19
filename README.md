@@ -1,6 +1,7 @@
-<p align="center"> # Huffman-coding-compression </p>
-#### Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
-
+<p align="center">
+<h1>Huffman-coding-compression</h1>
+<h4>Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).</h4>
+</p>
 ## Inner workings
 ### Text encoding
 Both compression and decompression uses ISO-8859-2 (/latin 2) encoding.
