@@ -15,7 +15,7 @@ Both compression and decompression uses ISO-8859-2 (/latin 2) encoding.
 ### Compression method
 Each character is assigned an alternative code (instead of the latin-2 8-bit one) using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding). Higher occuring characters simply have shorter codes and less occuring characters longer codes, which most of the time results in smaller total amount of bits. This implementation operates on individual characters, it does not encode sections of text (which would give better compression results).
 
-This specific implementation compresses files to about 70% of their initial size.
+This specific implementation compresses files to about 70% of their initial size, saving 30% of space.
 ### Storing of the tree
 Informations about each character are stored as follows:
 
