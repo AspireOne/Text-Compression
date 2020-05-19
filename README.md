@@ -1,6 +1,13 @@
 # Huffman-coding-compression
 #### Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
 
+## Usage
+To compress or decompress files, pass the paths to the files as parameters to the program. You can do that by simply dragging and dropping the selected files on the program, and Windows will automatically pass the paths to the files as arguments to the program.
+
+When a file filename.txt is passed to the program, it is compressed and the bytes are written to a file  filename.txt.comp, created in the same location as filename.txt is. 
+
+When a file filename.txt.comp is passed to the program, it is decompressed and the text is written to a file filename.txt, created in the same location is filename.txt.comp is.
+
 ## Inner workings
 ### Text encoding
 Both compression and decompression uses ISO-8859-2 (/latin 2) encoding.
@@ -34,11 +41,3 @@ letter | code | code length | latin-2 code |
 `[1][0100][01001010][1010]` (in the file written together, like this: `10100010010101010`)
 - if already encountered:
 `[0][1010]` (in the file written together, like this: `01010`)
-
-## Usage
-To compress or decompress files, pass the paths to the files as parameters to the program. You can do that by simply dragging and dropping the selected files on the program, and Windows will automatically pass the paths to the files as arguments to the program.
-
-When a file filename.txt is passed to the program, it is compressed and the bytes are written to a file  filename.txt.comp, created in the same location as filename.txt is. 
-
-When a file filename.txt.comp is passed to the program, it is decompressed and the text is written to a file filename.txt, created in the same location is filename.txt.comp is.
-
