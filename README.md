@@ -43,3 +43,6 @@ letter | code | code length | latin-2 code |
 `[1][0100][01001010][1010]` (in the file written together, like this: `10100010010101010`)
 - if already encountered:
 `[0][1010]` (in the file written together, like this: `01010`)
+
+## license
+MIT
