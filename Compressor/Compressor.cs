@@ -11,20 +11,29 @@ namespace HuffmanCompression
 {
     public class Compressor
     {
-        public static readonly string CompressedFileExtension = ".comp";
         public const byte CodeAlreadyEncounteredBit = 0;
         public const byte CodeNotAlreadyEncounteredBit = 1;
+        public static readonly string CompressedFileExtension = ".comp";
         public static readonly byte BitsInOneChar = 8;
-        public static readonly byte AmountOfBitsToRepresentCodeLength = 4;
-        public static readonly byte MaxCodeLength = ComputeMaxCodeLength();
         public static readonly Encoding TextEncoding = Encoding.GetEncoding("ISO-8859-2");
 
-        private static byte ComputeMaxCodeLength()
+        public static readonly (byte amountOfBits, byte maxValueInDecimal, string representationInFile)[] CodeLengthLengthInfo =
+        {
+            (3, GetBinaryNumberMaxValue(3), "00"),
+            (4, GetBinaryNumberMaxValue(4), "01"),
+            (5, GetBinaryNumberMaxValue(5), "10"),
+            (6, GetBinaryNumberMaxValue(6), "11"),
+        };
+
+        public static readonly byte MaxCodeLength = CodeLengthLengthInfo.Last().maxValueInDecimal;
+        public static readonly byte CodeLengthLengthInfoBitsAmount = (byte)((CodeLengthLengthInfo.Length / 2f) + 0.5f);
+
+        private static byte GetBinaryNumberMaxValue(byte amountOfPlaces)
         {
             byte prevMultiplier = 1;
             byte theNum = 1;
 
-            for (byte i = 0; i < AmountOfBitsToRepresentCodeLength - 1; ++i)
+            for (byte i = 0; i < amountOfPlaces - 1; ++i)
                 theNum += prevMultiplier *= 2;
 
             return theNum;
@@ -35,12 +44,11 @@ namespace HuffmanCompression
             (int occurence, char character)[] charactersOccurence = GetCharactersOccurence(text);
             Dictionary<char, string> charCodeDict = CreateCodesDictionary(charactersOccurence);
 
-            if (CodesAreTooLong(charCodeDict))
+            if (AnyCodeIsTooLong(charCodeDict))
                 throw new TooManyCharactersException("Input has too many different characters.");
 
             string compressed = AddTreeInfoAndReplaceCharsWithCode(text, charCodeDict);
-            byte[] compressedAsBytes = IOUtils.WriteBits(compressed, true);
-            //WriteCompressionInfo(compressed, compressedAsBytes, charCodeDict);
+            byte[] compressedAsBytes = IOUtils.WriteBits(compressed, true, CodeLengthLengthInfoBitsAmount);
 
             return compressedAsBytes;
         }
@@ -73,10 +81,10 @@ namespace HuffmanCompression
             return $"\noriginal size: {originalFileSize} bytes.\nCompressed size: {compressedFileSize} bytes.\nReduced by {percentage}%";
         }
 
-        private static bool CodesAreTooLong(Dictionary<char, string> codes)
+        private static bool AnyCodeIsTooLong(Dictionary<char, string> codes)
         {
             foreach (var pair in codes)
-                if (pair.Value.Length > MaxCodeLength)
+                if (pair.Value.Length > CodeLengthLengthInfo.Last().maxValueInDecimal)
                     return true;
             return false;
         }
@@ -87,8 +95,9 @@ namespace HuffmanCompression
             var textCopy = new StringBuilder(text);
             var usedChars = new List<char>();
 
-            int i = 0;
-            while (true)
+            (byte codeLengthLength, string codeLengthLengthBits) = GetAmountOfBitsNeededToRepresentCodeLength(dict);
+
+            for (int i = 0; i <= textCopy.Length - 1;)
             {
                 char character = textCopy[i];
                 bool charAlreadyUsed = usedChars.Contains(character);
@@ -102,51 +111,60 @@ namespace HuffmanCompression
                     usedChars.Add(character);
 
                     string charAsEncodedBits = IOUtils.GetBits(EncodeCharacter(character));
-                    string codeLengthAsBinary = CorrectCodeLength(Convert.ToString(code.Length, 2));
+                    string codeLengthAsBinary = FillCodeLength(Convert.ToString(code.Length, 2), codeLengthLength);
 
                     toInsert = string.Concat(toInsert, codeLengthAsBinary, charAsEncodedBits);
-
-                    if (codeLengthAsBinary.Length != AmountOfBitsToRepresentCodeLength)
-                        throw new Exception($"The number representing code length had a wrong length. Should be {AmountOfBitsToRepresentCodeLength}, but was {codeLengthAsBinary.Length}");
                 }
 
                 textCopy.Remove(i, 1);
                 textCopy.Insert(i, toInsert + code);
 
-                if ((i += toInsert.Length + code.Length) > textCopy.Length - 1)
-                    break;
+                i += toInsert.Length + code.Length;
             }
 
+            textCopy.Insert(0, codeLengthLengthBits);
             return textCopy.ToString();
         }
 
-        private static string CorrectCodeLength(string codeLength)
+        private static (byte amount, string representation) GetAmountOfBitsNeededToRepresentCodeLength(Dictionary<char, string> dict)
         {
-            int difference = AmountOfBitsToRepresentCodeLength - codeLength.Length;
+            byte longestCodeLength = GetLongestCodeLength(dict);
 
-            if (difference != 0)
-                for (int i = 0; i < difference; ++i)
-                    codeLength = codeLength.Insert(0, "0");
+            foreach (var (amount, maxCodeLengthDecimal, representationInFile) in CodeLengthLengthInfo)
+                if (longestCodeLength <= maxCodeLengthDecimal)
+                    return (amount, representationInFile);
 
-            return codeLength;
+            // This exception should never be thrown, because a check for codes lengths is made before calling this method.
+            throw new NotImplementedException("at least one character's code exceeded the maximal code length limit.");
         }
 
-        private static byte EncodeCharacter(char character)
+        private static byte GetLongestCodeLength(Dictionary<char, string> dict)
         {
-            var bytes = TextEncoding.GetBytes(new char[] { character });
+            byte highest = 0;
 
-            if (bytes.Length > 1)
-                throw new Exception($"It took more than 1 byte ({bytes.Length}) to encode character {character}");
+            foreach (var pair in dict)
+                if (pair.Value.Length > highest)
+                    highest = (byte)pair.Value.Length;
 
-            return bytes[0];
+            return highest;
         }
 
-        // Character | the character's representation code.
+        private static string FillCodeLength(string charCode, byte amountOfBitsToRepresentCodeLength)
+        {
+            int difference = amountOfBitsToRepresentCodeLength - charCode.Length;
+
+            for (int i = 0; i < difference; ++i)
+                charCode = charCode.Insert(0, "0");
+
+            return charCode;
+        }
+
+        private static byte EncodeCharacter(char character) => TextEncoding.GetBytes(new char[] { character })[0];
+
         private static Dictionary<char, string> CreateCodesDictionary((int occurence, char character)[] occurences)
         {
             var codes = new Dictionary<char, string>();
             BoxCharacters(occurences).ForEach(x => codes.Add(x.Character, FindCharacterCode(x)));
-
             return codes;
         }
 
@@ -154,15 +172,14 @@ namespace HuffmanCompression
         {
             string code = "";
 
-            Box temp = box;
+            Box currBox = box;
             do
-                code += temp.Number;
-            while ((temp = temp.Parent)?.Parent != null);
+                code += currBox.Number;
+            while ((currBox = currBox.Parent)?.Parent != null);
 
             return code.Reverse();
         }
 
-        // Correct.
         private static List<CharacterBox> BoxCharacters((int occurence, char character)[] occurences)
         {
             var CharacterList = new List<CharacterBox>();
@@ -183,8 +200,8 @@ namespace HuffmanCompression
 
                 Box newBox = new BoxesBox(left, right);
 
-                tree.Remove(right);
-                tree.Remove(left);
+                tree.RemoveAt(BoxesBox.RightIndex);
+                tree.RemoveAt(BoxesBox.LeftIndex);
 
                 InsertAtAppropriatePlace(tree, newBox);
             }
@@ -192,7 +209,6 @@ namespace HuffmanCompression
             return CharacterList;
         }
 
-        // Correct.
         private static void InsertAtAppropriatePlace(List<Box> tree, Box boxToInsert)
         {
             if (tree.Count == 0 || boxToInsert.Sum > tree.Last().Sum || (boxToInsert.Sum == tree.Last().Sum && tree.Last().Depth < boxToInsert.Depth))
@@ -215,7 +231,6 @@ namespace HuffmanCompression
             throw new Exception($"Could not insert box with sum {boxToInsert.Sum} to a tree with count {tree.Count} and highest sum {tree.Last().Sum}.");
         }
 
-        // Correct.
         private static (int occurence, char character)[] GetCharactersOccurence(string text)
         {
             var set = new HashSet<(int occurence, char character)>();

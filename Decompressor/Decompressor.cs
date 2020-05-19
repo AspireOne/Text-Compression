@@ -13,6 +13,7 @@ namespace HuffmanCompression
         public static string Decompress(byte[] compressedAsBytes)
         {
             var compressedAsBits = new StringBuilder(IOUtils.GetBits(compressedAsBytes));
+            byte amountOfBitsThatStoreCodesLength = ExtractInfoAboutStoringCodesLength(compressedAsBits);
             RemoveBeginningZeros(compressedAsBits);
 
             var decompressed = new StringBuilder();
@@ -25,7 +26,7 @@ namespace HuffmanCompression
 
                 (string code, char character) = codeAlreadyEncountered
                     ? TryRecognizeCode(compressedAsBits, dict)
-                    : ExtractInfoCodeNotEncountered(compressedAsBits);
+                    : ExtractInfoCodeNotEncountered(compressedAsBits, amountOfBitsThatStoreCodesLength);
 
                 decompressed.Append(character);
 
@@ -43,6 +44,17 @@ namespace HuffmanCompression
             File.WriteAllText(pathToDecompressedFile, decompressedText);
         }
 
+        private static byte ExtractInfoAboutStoringCodesLength(StringBuilder text)
+        {
+            string info = text.ToString(0, Compressor.CodeLengthLengthInfoBitsAmount);
+            text.Remove(0, Compressor.CodeLengthLengthInfoBitsAmount);
+            foreach (var (amount, _, representationInFile) in Compressor.CodeLengthLengthInfo)
+                if (representationInFile == info)
+                    return amount;
+
+            throw new NotImplementedException("Could not determine the amount of bits used for writing the codes' lengths.");
+        }
+
         private static void RemoveBeginningZeros(StringBuilder text)
         {
             for (int i = 0; i < IOUtils.BitsInByte; ++i)
@@ -53,11 +65,11 @@ namespace HuffmanCompression
                 }
         }
 
-        private static (string code, char character) ExtractInfoCodeNotEncountered(StringBuilder compressed)
+        private static (string code, char character) ExtractInfoCodeNotEncountered(StringBuilder compressed, byte amountOfBitsThatStoreCodesLength)
         {
-            string codeLengthAsBinary = compressed.ToString(0, Compressor.AmountOfBitsToRepresentCodeLength);
+            string codeLengthAsBinary = compressed.ToString(0, amountOfBitsThatStoreCodesLength);
             int codeLength = Convert.ToInt32(codeLengthAsBinary, 2);
-            compressed.Remove(0, Compressor.AmountOfBitsToRepresentCodeLength);
+            compressed.Remove(0, amountOfBitsThatStoreCodesLength);
 
             string charEncoded = compressed.ToString(0, Compressor.BitsInOneChar);
             compressed.Remove(0, Compressor.BitsInOneChar);
