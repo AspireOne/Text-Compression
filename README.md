@@ -1,7 +1,5 @@
-<p align="center">
-<h1>Huffman-coding-compression</h1>
-<h4>Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).</h4>
-</p>
+#Huffman-coding-compression
+####Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
 
 ## Inner workings
 ### Text encoding
