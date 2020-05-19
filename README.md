@@ -1,4 +1,4 @@
-# Huffman-coding-compression
+<p align="center"> # Huffman-coding-compression </p>
 #### Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
 
 ## Inner workings
