@@ -1,5 +1,5 @@
 # Huffman-coding-compression
-######Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
+#####Compression & decompression of text files using [huffman coding](https://en.wikipedia.org/wiki/Huffman_coding).
 
 ## Inner workings
 ### Text encoding
@@ -25,7 +25,7 @@ if yes: `[the character's code]`
 example:
 <pre>
 letter | code | code length | latin-2 code |
-   R      1010      4 (0100)        01001010
+   R     1010    4 (0100)       01001010
 </pre>
 
 - if not already encountered:
