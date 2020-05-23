@@ -25,9 +25,9 @@ if not: `[length of the character's code]`, `[the character's latin-2 representa
 
 if yes: `[the character's code]`
 
-- the character's code length is stored in 4 bits (which means that the maximal code length is 2^4 - 1 = 15 - so in this implementation there's a limit on the amount of different characters that can be present in the text).
+- the character's code length is represented in 3-6 bits (which means that the maximal code length is 2^6 - 1 = 63 - so in this implementation there's a limit on the amount of different characters that can be present in the text - but it is very unlikely than any text would generate code larger than 63 bits). How does the decompressor know how many bits are representing the code's length? In the beginning of the file, the first two bytes indicate exactly that. 00 is for 3 bits, 01 for 4 bits, 10 for 5 bits and 11 for 6 bits.
 
-- Informations about each characters are not written at the beginning or the end of the file, but directly whenever the character is in the text.
+- Informations about each characters are not written at the beginning or the end of the file, but directly whenever the character is in the text (the only information written directly at the beginning of the file - even before the redundant zeros - is a two-bit indicator of in how many bits the codes lengths are stored).
 
 - The bits are stored in bytes, and each byte has 8 bits. If the amount of bits isn't divisible by 8 without a remainder, additional bits must be added. This implementation adds zeros at the beginning of the compressed text, and because the first information on each character is if it has (0) or has not (1) already been encountered, then the first bit on the first character must obviously always be 1. This allows the decompressor to safely recognize and ignore the redundant bits -> all zeros before the first non-zero character.
 
