@@ -51,3 +51,5 @@ MIT
 - Storing each bit (while compressing and mainly decompressing) as one character was an absolutely retarded idea. This way, representing one bit takes 2 bytes (the size of one character), which is unacceptable. It's needed to, for example, create a BitArray or BitList class, which will internally store a collection of bytes, and will write (and read) each bit to a byte. This way representing one bit will take 1/8 byte (+ the size of instantiating the class - the internal collection, fields etc.), which is a significant improvement.
 
 - Limit the amount of threads that are used to concurrently compress/decompress files (either set a limit based on the PC's processor, or use ThreadPool)
+
+- Optimize speed
