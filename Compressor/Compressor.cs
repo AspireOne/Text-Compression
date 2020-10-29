@@ -3,6 +3,7 @@ using HuffmanCompression.TreeElements;
 using HuffmanCompression.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -42,14 +43,16 @@ namespace HuffmanCompression
         public static byte[] Compress(string text)
         {
             (int occurence, char character)[] charactersOccurence = GetCharactersOccurence(text);
+
+            // This is the bottleneck.
             Dictionary<char, string> charCodeDict = CreateCodesDictionary(charactersOccurence);
 
             if (AnyCodeIsTooLong(charCodeDict))
                 throw new TooManyCharactersException("Input has too many different characters.");
 
+            // This is bottleneck.
             string compressed = AddTreeInfoAndReplaceCharsWithCode(text, charCodeDict);
             byte[] compressedAsBytes = IOUtils.WriteBits(compressed, true, CodeLengthLengthInfoBitsAmount);
-
             return compressedAsBytes;
         }
 
@@ -75,8 +78,8 @@ namespace HuffmanCompression
         public static string GetCompressionSummary(long originalFileSize, long compressedFileSize)
         {
             float sizeDiff = originalFileSize - compressedFileSize;
-            float b = sizeDiff / originalFileSize;
-            int percentage = (int)Math.Round(b * 100);
+            float x = sizeDiff / originalFileSize;
+            int percentage = (int)Math.Round(x * 100);
 
             return $"\noriginal size: {originalFileSize} bytes.\nCompressed size: {compressedFileSize} bytes.\nReduced by {percentage}%";
         }
@@ -92,38 +95,31 @@ namespace HuffmanCompression
         // [1][length][as encoded bits][code] OR [0][code]
         private static string AddTreeInfoAndReplaceCharsWithCode(string text, Dictionary<char, string> dict)
         {
-            var textCopy = new StringBuilder(text);
-            var usedChars = new List<char>();
-
+            var usedChars = new HashSet<char>();
             (byte codeLengthLength, string codeLengthLengthBits) = GetAmountOfBitsNeededToRepresentCodeLength(dict);
 
-            for (int i = 0; i <= textCopy.Length - 1;)
+            StringBuilder encoded = new StringBuilder();
+
+            foreach (char character in text)
             {
-                char character = textCopy[i];
-                bool charAlreadyUsed = usedChars.Contains(character);
+                string code = dict[character];
 
-                dict.TryGetValue(character, out string code);
-
-                string toInsert = (charAlreadyUsed ? CodeAlreadyEncounteredBit : CodeNotAlreadyEncounteredBit) + "";
-
-                if (!charAlreadyUsed)
+                if (!usedChars.Contains(character))
                 {
                     usedChars.Add(character);
 
                     string charAsEncodedBits = IOUtils.GetBits(EncodeCharacter(character));
                     string codeLengthAsBinary = FillCodeLength(Convert.ToString(code.Length, 2), codeLengthLength);
 
-                    toInsert = string.Concat(toInsert, codeLengthAsBinary, charAsEncodedBits);
+                    encoded.Append(CodeNotAlreadyEncounteredBit).Append(codeLengthAsBinary).Append(charAsEncodedBits);
                 }
+                else
+                    encoded.Append(CodeAlreadyEncounteredBit);
 
-                textCopy.Remove(i, 1);
-                textCopy.Insert(i, toInsert + code);
-
-                i += toInsert.Length + code.Length;
+                encoded.Append(code);
             }
 
-            textCopy.Insert(0, codeLengthLengthBits);
-            return textCopy.ToString();
+            return encoded.Insert(0, codeLengthLengthBits).ToString();
         }
 
         private static (byte amount, string representation) GetAmountOfBitsNeededToRepresentCodeLength(Dictionary<char, string> dict)
@@ -149,11 +145,12 @@ namespace HuffmanCompression
             return highest;
         }
 
+        // Fills unused places with zeros.
         private static string FillCodeLength(string charCode, byte amountOfBitsToRepresentCodeLength)
         {
             int difference = amountOfBitsToRepresentCodeLength - charCode.Length;
 
-            for (int i = 0; i < difference; ++i)
+            for (byte i = 0; i < difference; ++i)
                 charCode = charCode.Insert(0, "0");
 
             return charCode;
@@ -231,13 +228,20 @@ namespace HuffmanCompression
             throw new Exception($"Could not insert box with sum {boxToInsert.Sum} to a tree with count {tree.Count} and highest sum {tree.Last().Sum}.");
         }
 
+        // This is the bottleneck
         private static (int occurence, char character)[] GetCharactersOccurence(string text)
         {
-            var set = new HashSet<(int occurence, char character)>();
-            foreach (char ch in text)
-                set.Add((text.Length - text.Replace(ch.ToString(), "").Length, ch));
+            StringBuilder sb = new StringBuilder(text);
+            var stack = new Stack<(int occurence, char character)>();
 
-            return set.ToArray();
+            int lengthBeforeReplacement;
+            while ((lengthBeforeReplacement = sb.Length) > 0)
+            {
+                char character = sb[0];
+                sb.Replace(character.ToString(), "");
+                stack.Push((lengthBeforeReplacement - sb.Length, character));
+            }
+            return stack.ToArray();
         }
     }
 }
