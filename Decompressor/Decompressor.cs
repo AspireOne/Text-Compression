@@ -2,36 +2,37 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 using System.Text;
 
 namespace HuffmanCompression
 {
     internal class Decompressor
     {
-        private const char EmptyChar = '\0';
+        const char EmptyChar = '\0';
+        readonly static StringBuilder UnfinishedBits = new StringBuilder(Compressor.MaxCodeLength, Compressor.MaxCodeLength);
 
         public static string Decompress(byte[] compressedAsBytes)
         {
-            var compressedAsBits = new StringBuilder(IOUtils.GetBits(compressedAsBytes));
-            byte amountOfBitsThatStoreCodesLength = ExtractInfoAboutStoringCodesLength(compressedAsBits);
-            RemoveBeginningZeros(compressedAsBits);
+            string compressedAsBits = IOUtils.GetBits(compressedAsBytes);
+            byte amountOfBitsThatStoreCodesLength = GetCodesLength(ref compressedAsBits);
+            compressedAsBits = RemoveBeginningZeros(compressedAsBits);
 
             var decompressed = new StringBuilder();
             var dict = new Dictionary<string, char>();
 
-            while (compressedAsBits.Length > 1)
+            for (int i = 0; i < compressedAsBits.Length;)
             {
-                bool codeAlreadyEncountered = char.GetNumericValue(compressedAsBits[0]) == Compressor.CodeAlreadyEncounteredBit;
-                compressedAsBits.Remove(0, 1);
+                bool codeAlreadyEncountered = char.GetNumericValue(compressedAsBits[i++]) == Compressor.CodeAlreadyEncounteredBit;
 
                 (string code, char character) = codeAlreadyEncountered
-                    ? TryRecognizeCode(compressedAsBits, dict)
-                    : ExtractInfoCodeNotEncountered(compressedAsBits, amountOfBitsThatStoreCodesLength);
-
-                decompressed.Append(character);
+                    ? GetCode(compressedAsBits, dict, ref i)
+                    : ExtractInfoCodeNotEncountered(compressedAsBits, amountOfBitsThatStoreCodesLength, ref i);
 
                 if (!codeAlreadyEncountered)
                     dict.Add(code, character);
+
+                decompressed.Append(character);
             }
 
             return decompressed.ToString();
@@ -44,10 +45,10 @@ namespace HuffmanCompression
             File.WriteAllText(pathToDecompressedFile, decompressedText);
         }
 
-        private static byte ExtractInfoAboutStoringCodesLength(StringBuilder text)
+        private static byte GetCodesLength(ref string text)
         {
-            string info = text.ToString(0, Compressor.CodeLengthLengthInfoBitsAmount);
-            text.Remove(0, Compressor.CodeLengthLengthInfoBitsAmount);
+            string info = text.Substring(0, Compressor.CodeLengthLengthInfoBitsAmount);
+            text = text.Remove(0, Compressor.CodeLengthLengthInfoBitsAmount);
             foreach (var (amount, _, representationInFile) in Compressor.CodeLengthLengthInfo)
                 if (representationInFile == info)
                     return amount;
@@ -55,48 +56,47 @@ namespace HuffmanCompression
             throw new NotImplementedException("Could not determine the amount of bits used for writing the codes' lengths.");
         }
 
-        private static void RemoveBeginningZeros(StringBuilder text)
+        private static string RemoveBeginningZeros(string text)
         {
-            for (int i = 0; i < IOUtils.BitsInByte; ++i)
-                if (text[i] != '0')
-                {
-                    text.Remove(0, i);
-                    return;
-                }
+            int i;
+            for (i = 0; text[i] == '0'; ++i) ;
+
+            return text.Remove(0, i);
         }
 
-        private static (string code, char character) ExtractInfoCodeNotEncountered(StringBuilder compressed, byte amountOfBitsThatStoreCodesLength)
+        private static (string code, char character) ExtractInfoCodeNotEncountered(string compressed, byte amountOfBitsThatStoreCodesLength, ref int index)
         {
-            string codeLengthAsBinary = compressed.ToString(0, amountOfBitsThatStoreCodesLength);
+            string codeLengthAsBinary = compressed.Substring(index, amountOfBitsThatStoreCodesLength);
             int codeLength = Convert.ToInt32(codeLengthAsBinary, 2);
-            compressed.Remove(0, amountOfBitsThatStoreCodesLength);
+            index += amountOfBitsThatStoreCodesLength;
 
-            string charEncoded = compressed.ToString(0, Compressor.BitsInOneChar);
-            compressed.Remove(0, Compressor.BitsInOneChar);
+            string charEncoded = compressed.Substring(index, Compressor.BitsInOneChar);
+            index += Compressor.BitsInOneChar;
 
-            string code = compressed.ToString(0, codeLength);
-            compressed.Remove(0, codeLength);
+            string code = compressed.Substring(index, codeLength);
+            index += codeLength;
 
             char charDecoded = Compressor.TextEncoding.GetString(IOUtils.WriteBits(charEncoded))[0];
             return (code, charDecoded);
         }
 
-        private static (string code, char character) TryRecognizeCode(StringBuilder bits, Dictionary<string, char> dict)
-        {
-            string unfinishedBits = "";
 
-            for (int i = 0; i < Compressor.MaxCodeLength; ++i)
+        private static (string code, char character) GetCode(string bits, Dictionary<string, char> dict, ref int index)
+        {
+            UnfinishedBits.Clear();
+
+            for (int i = index; i < index + Compressor.MaxCodeLength; ++i)
             {
-                dict.TryGetValue(unfinishedBits += bits[i], out char character);
+                dict.TryGetValue(UnfinishedBits.Append(bits[i]).ToString(), out char character);
 
                 if (character != default)
                 {
-                    bits.Remove(0, unfinishedBits.Length);
-                    return (unfinishedBits, character);
+                    index += UnfinishedBits.Length;
+                    return (UnfinishedBits.ToString(), character);
                 }
             }
 
-            throw new Exception($"Method RecognizeCode in class {nameof(Decompressor)} could not recognize code: {bits.ToString(0, Compressor.MaxCodeLength)}");
+            throw new Exception($"Method RecognizeCode in class {nameof(Decompressor)} could not recognize code: {bits.Substring(index, Compressor.MaxCodeLength)}");
         }
     }
 }
