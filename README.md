@@ -49,7 +49,7 @@ letter | code | code length | latin-2 code |
 
 - Limit the amount of threads that are used to concurrently compress/decompress files (either set a limit based on the PC's processor, or use ThreadPool)
 
-- Optimize speed
+- ~~Optimize speed~~
 
 ## license
 MIT
